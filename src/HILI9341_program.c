@@ -538,7 +538,8 @@ void HILI9341_DisplayImage(u16 image[ILI9341_PIXEL])
 	MGPIO_ClearPin(PORTC,Pin2_Reset);
 
 
-	for (n = 0; n < ILI9341_PIXEL; n++) {
+	for (n = 0; n < ILI9341_PIXEL; n++) 
+	{
 		i = image[n] >> 8;
 		j = image[n] & 0xFF;
 
@@ -548,50 +549,63 @@ void HILI9341_DisplayImage(u16 image[ILI9341_PIXEL])
 	MGPIO_SetPin(PORTC,Pin2_Set);
 }
 
-void HILI9341_Rotate(LCD_ILI9341_Orientation_t orientation) {
+void HILI9341_Rotate(LCD_ILI9341_Orientation_t orientation) 
+{
 	HILI9341_SendCommand(ILI9341_MAC);
-	if (orientation == LCD_ILI9341_Orientation_Portrait_1) {
+	if (orientation == LCD_ILI9341_Orientation_Portrait_1) 
+	{
 		HILI9341_SendData(0x58);
-	} else if (orientation == LCD_ILI9341_Orientation_Portrait_2) {
+	} else if (orientation == LCD_ILI9341_Orientation_Portrait_2) 
+	{
 		HILI9341_SendData(0x88);
-	} else if (orientation == LCD_ILI9341_Orientation_Landscape_1) {
+	} else if (orientation == LCD_ILI9341_Orientation_Landscape_1) 
+	{
 		HILI9341_SendData(0x28);
-	} else if (orientation == LCD_ILI9341_Orientation_Landscape_2) {
+	} else if (orientation == LCD_ILI9341_Orientation_Landscape_2) 
+	{
 		HILI9341_SendData(0xE8);
 	}
 
-	if (orientation == LCD_ILI9341_Orientation_Portrait_1 || orientation == LCD_ILI9341_Orientation_Portrait_2) {
+	if (orientation == LCD_ILI9341_Orientation_Portrait_1 || orientation == LCD_ILI9341_Orientation_Portrait_2) 
+	{
 		ILI9341_Opts.width = ILI9341_WIDTH;
 		ILI9341_Opts.height = ILI9341_HEIGHT;
 		ILI9341_Opts.orientation = LCD_ILI9341_Portrait;
-	} else {
+	} else 
+	{
 		ILI9341_Opts.width = ILI9341_HEIGHT;
 		ILI9341_Opts.height = ILI9341_WIDTH;
 		ILI9341_Opts.orientation = LCD_ILI9341_Landscape;
 	}
 }
 
-void HILI9341_Puts(u16 x, u16 y, char *str, LCD_FontDef_t *font, u16 foreground, u16 background) {
+void HILI9341_Puts(u16 x, u16 y, char *str, LCD_FontDef_t *font, u16 foreground, u16 background) 
+{
 	u16 startX = x;
 
 	/* Set X and Y coordinates */
 	ILI9341_x = x;
 	ILI9341_y = y;
 
-	while (*str) {
+	while (*str) 
+	{
 		//New line
-		if (*str == '\n') {
+		if (*str == '\n') 
+		{
 			ILI9341_y += font->FontHeight + 1;
 			//if after \n is also \r, than go to the left of the screen
-			if (*(str + 1) == '\r') {
+			if (*(str + 1) == '\r') 
+			{
 				ILI9341_x = 0;
 				str++;
-			} else {
+			} else 
+			{
 				ILI9341_x = startX;
 			}
 			str++;
 			continue;
-		} else if (*str == '\r') {
+		} else if (*str == '\r') 
+		{
 			str++;
 			continue;
 		}
@@ -600,24 +614,26 @@ void HILI9341_Puts(u16 x, u16 y, char *str, LCD_FontDef_t *font, u16 foreground,
 	}
 }
 
-void HILI9341_GetStringSize(char *str, LCD_FontDef_t *font, u16 *width, u16 *height) {
-	//	u16 w = 0;
+void HILI9341_GetStringSize(char *str, LCD_FontDef_t *font, u16 *width, u16 *height) 
+{
 	u16 w = 0;
 
 	*height = font->FontHeight;
-	while (*str++) {
+	while (*str++) 
+	{
 		w += font->FontWidth;
 	}
 	*width = w;
 }
 
-void HILI9341_Putc(u16 x, u16 y, char c, LCD_FontDef_t *font, u16 foreground, u16 background) {
+void HILI9341_Putc(u16 x, u16 y, char c, LCD_FontDef_t *font, u16 foreground, u16 background) 
+{
 	u32 i, b, j;
 	/* Set coordinates */
 	ILI9341_x = x;
 	ILI9341_y = y;
 	if ((ILI9341_x + font->FontWidth) > ILI9341_Opts.width) {
-		//If at the end of a line of display, go to new line and set x to 0 position
+		/*If at the end of a line of display, go to new line and set x to 0 position*/
 		ILI9341_y += font->FontHeight;
 		ILI9341_x = 0;
 	}
@@ -635,22 +651,26 @@ void HILI9341_Putc(u16 x, u16 y, char c, LCD_FontDef_t *font, u16 foreground, u1
 }
 
 
-void HILI9341_DrawLine(u16 x0, u16 y0, u16 x1, u16 y1, u16 color) {
-	/* Code by dewoller: https://github.com/dewoller */
+void HILI9341_DrawLine(u16 x0, u16 y0, u16 x1, u16 y1, u16 color) 
+{
 
 	s16 dx, dy, sx, sy, err, e2;
 
 	/* Check for overflow */
-	if (x0 >= ILI9341_Opts.width) {
+	if (x0 >= ILI9341_Opts.width) 
+		
 		x0 = ILI9341_Opts.width - 1;
 	}
-	if (x1 >= ILI9341_Opts.width) {
+	if (x1 >= ILI9341_Opts.width) 
+	{
 		x1 = ILI9341_Opts.width - 1;
 	}
-	if (y0 >= ILI9341_Opts.height) {
+	if (y0 >= ILI9341_Opts.height) 
+	{
 		y0 = ILI9341_Opts.height - 1;
 	}
-	if (y1 >= ILI9341_Opts.height) {
+	if (y1 >= ILI9341_Opts.height) 
+	{
 		y1 = ILI9341_Opts.height - 1;
 	}
 
@@ -660,37 +680,44 @@ void HILI9341_DrawLine(u16 x0, u16 y0, u16 x1, u16 y1, u16 color) {
 	sy = (y0 < y1) ? 1 : -1; 
 	err = ((dx > dy) ? dx : -dy) / 2; 
 
-	while (1) {
+	while (1) 
+	{
 		HILI9341_DrawPixel(x0, y0, color); 
-		if (x0 == x1 && y0 == y1) {
+		if (x0 == x1 && y0 == y1) 
+		{
 			break;
 		}
 		e2 = err; 
-		if (e2 > -dx) {
+		if (e2 > -dx) 
+		{
 			err -= dy;
 			x0 += sx;
 		} 
-		if (e2 < dy) {
+		if (e2 < dy) 
+		{
 			err += dx;
 			y0 += sy;
 		} 
 	}
 }
 
-void HILI9341_DrawRectangle(u16 x0, u16 y0, u16 x1, u16 y1, u16 color) {
+void HILI9341_DrawRectangle(u16 x0, u16 y0, u16 x1, u16 y1, u16 color) 
+{
 	HILI9341_DrawLine(x0, y0, x1, y0, color); //Top
 	HILI9341_DrawLine(x0, y0, x0, y1, color);	//Left
 	HILI9341_DrawLine(x1, y0, x1, y1, color);	//Right
 	HILI9341_DrawLine(x0, y1, x1, y1, color);	//Bottom
 }
 
-void HILI9341_DrawFilledRectangle(u16 x0, u16 y0, u16 x1, u16 y1, u16 color) {
+void HILI9341_DrawFilledRectangle(u16 x0, u16 y0, u16 x1, u16 y1, u16 color) 
+{
 	for (; y0 < y1; y0++) {
 		HILI9341_DrawLine(x0, y0, x1, y0, color);
 	}
 }
 
-void HILI9341_DrawCircle(s16 x0, s16 y0, s16 r, u16 color) {
+void HILI9341_DrawCircle(s16 x0, s16 y0, s16 r, u16 color) 
+{
 	s16 f = 1 - r;
 	s16 ddF_x = 1;
 	s16 ddF_y = -2 * r;
@@ -702,8 +729,10 @@ void HILI9341_DrawCircle(s16 x0, s16 y0, s16 r, u16 color) {
 	HILI9341_DrawPixel(x0 + r, y0, color);
 	HILI9341_DrawPixel(x0 - r, y0, color);
 
-	while (x < y) {
-		if (f >= 0) {
+	while (x < y) 
+	{
+		if (f >= 0) 
+		{
 			y--;
 			ddF_y += 2;
 			f += ddF_y;
@@ -724,7 +753,8 @@ void HILI9341_DrawCircle(s16 x0, s16 y0, s16 r, u16 color) {
 	}
 }
 
-void HILI9341_DrawFilledCircle(s16 x0, s16 y0, s16 r, u16 color) {
+void HILI9341_DrawFilledCircle(s16 x0, s16 y0, s16 r, u16 color) 
+{
 	s16 f = 1 - r;
 	s16 ddF_x = 1;
 	s16 ddF_y = -2 * r;
@@ -737,8 +767,10 @@ void HILI9341_DrawFilledCircle(s16 x0, s16 y0, s16 r, u16 color) {
 	HILI9341_DrawPixel(x0 - r, y0, color);
 	HILI9341_DrawLine(x0 - r, y0, x0 + r, y0, color);
 
-	while (x < y) {
-		if (f >= 0) {
+	while (x < y) 
+	{
+		if (f >= 0) 
+		{
 			y--;
 			ddF_y += 2;
 			f += ddF_y;
