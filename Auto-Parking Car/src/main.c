@@ -25,8 +25,8 @@
 #include "HOV7670_interface.h"
 
 volatile u8 MDCMI_FLAG;
-volatile u8 Flag2=0;
-volatile u8 frame_flag = 0;
+volatile u8 Flag2;
+volatile u8 frame_flag;
 volatile u8 x1,x2,x3,x4,x5,x6;
 volatile u32 cnt1;
 volatile u32 cnt8;
@@ -41,13 +41,11 @@ volatile f64 result[6];
 void TIM1_OV(void)
 {
 	cnt1++;
-	MTIM1 -> SR	   &= ~(1);
 }
 
 void TIM8_OV(void)
 {
 	cnt8++;
-	MTIM8 -> SR	   &= ~(1);
 }
 void camera_task(void)
 {
