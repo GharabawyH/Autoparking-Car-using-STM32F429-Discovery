@@ -276,7 +276,6 @@ void Task1(void)
 			x4++;
 		}
 	}
-	MTIM1 -> SR	   &= ~(0x1E);
 }
 void Task2(void)
 {
@@ -309,7 +308,6 @@ void Task2(void)
 			x6++;
 		}
 	}
-	MTIM8 -> SR	   &= ~(0x1E);
 }
 
 void main(void)
