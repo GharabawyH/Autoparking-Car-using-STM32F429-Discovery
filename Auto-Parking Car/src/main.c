@@ -27,14 +27,15 @@
 volatile u8 MDCMI_FLAG;
 volatile u8 Flag2=0;
 volatile u8 frame_flag = 0;
-volatile u8 x1,x2,x3,x4,x5;
+volatile u8 x1,x2,x3,x4,x5,x6;
 volatile u32 cnt1;
 volatile u32 cnt8;
-volatile u16 Counter1;
-volatile u16 Counter2;
-volatile u16 counter3;
+volatile u32 Counter1;
+volatile u32 Counter2;
+volatile u32 counter3;
 volatile u8 Flag;
 volatile u8 Flag1;
+volatile f64 Result;
 volatile f64 result[6];
 
 void TIM1_OV(void)
@@ -50,89 +51,94 @@ void TIM8_OV(void)
 }
 void camera_task(void)
 {
-	if(!MDCMI_FLAG)
+	if(MDCMI_FLAG)
 	{
-	MDCMI-> CR |= 0x1;
-	MDCMI_FLAG = 1;
+		if(((MDMA2 -> LISR) & 0x800)!= 0)
+		{
+			MDMA2 ->LIFCR|= 0x800;
+			MDMA2 ->S1CR |=0x01;
+			// Show camera image
+			HILI9341_Rotate(LCD_ILI9341_Orientation_Landscape_1);
+			HILI9341_DisplayImage((u16*) frame_buffer);
+			MDCMI_FLAG = 0;
+		}
 	}
-	if(frame_flag)
+	else
 	{
-		 /*Show camera image*/
-		HILI9341_Rotate(LCD_ILI9341_Orientation_Landscape_1);
-		HILI9341_DisplayImage((u16*) frame_buffer);
-		frame_flag = 0;
+		MDCMI-> CR |= 0x1;
+		MDCMI_FLAG = 1;
 	}
 }
-void park1_Task(void)
+void park_Task(void)
 {
-	//if(result[0]<30 )
-	//{
-	//	HMOTOR_voidRotation(HMOTOR_Forward,0);
-	//}
-	//if(result[4]<30)
-	//{
-	//	HMOTOR_voidRotation(HMOTOR_Backward,0);
-	//}
-}
-void park2_Task(void)
-{
-	if(result[1]<30 && result[2]<30 && Flag2==0 )
+	if(result[1]<30 && result[2]<30 && Flag2==0)
 	{
-		HMOTOR_voidRotation(HMOTOR_Forward,7000);
+		HMOTOR_voidRotation(HMOTOR_Forward,5700);
+		Flag2++;
 	}
-
-}
-void park3_Task(void)
-{
-	if((result[1]>50)&&(Flag2==0))
+	if((result[1]>50)&&(Flag2==1))
 	{
 		Flag2++;
 		MTIM3_Initialize();
 	}
-}
-void park4_Task(void)
-{
-	if((result[1]<30) && (result[2]<30) && (Flag2==1) )
-	{
-		MSTK_Delay_us(100);
-		HMOTOR_voidRotation(HMOTOR_Forward,0);
-		counter3=	MTIM3 -> CNT;
-		HMOTOR_voidRotation(HMOTOR_RIGHT,HMOTOR_RIGHT_HALFSPEED);
-		HMOTOR_voidRotation(HMOTOR_Backward,4000);
-		Flag2=3;
-	}
-}
 
-void park5_Task(void)
-{
-	if((result[3]<65)&&(Flag2==3))
+	if((result[1]<40)  && (Flag2==2) )
+	{
+		counter3=MTIM3 -> CNT;
+		MSTK_Delay_us(7000000);
+		HMOTOR_voidRotation(HMOTOR_Forward,0);
+
+		if(counter3 > 23000)
+		{
+			Flag2++;
+		}
+		else
+		{
+			HMOTOR_voidRotation(HMOTOR_RIGHT,HMOTOR_RIGHT_HALFSPEED);
+			MSTK_Delay_us(1000000);
+			HMOTOR_voidRotation(HMOTOR_LEFT,HMOTOR_LEFT_FULLSPEED);
+			Flag2 = 20;
+		}
+	}
+	if((result[1]<40) && (result[2]<40) && (Flag2==3) )
+	{
+		/*MSTK_Delay_us(100);*/
+
+		HMOTOR_voidRotation(HMOTOR_RIGHT,HMOTOR_RIGHT_HALFSPEED);
+		HMOTOR_voidRotation(HMOTOR_Backward,4500);
+		Flag2++;
+
+
+	}
+	if((result[3]<85)&&(Flag2==4))
 	{
 		HMOTOR_voidRotation(HMOTOR_Backward,0);
 		HMOTOR_voidRotation(HMOTOR_LEFT,HMOTOR_LEFT_FULLSPEED);
-		HMOTOR_voidRotation(HMOTOR_Backward,6000);
-		Flag2=4;
+		HMOTOR_voidRotation(HMOTOR_Backward,4500);
+		Flag2++;
 	}
-}
-void park6_Task(void)
-{
-	if((result[4]<35)&&(Flag2==4))
+
+	if((result[4]<35)&&(Flag2==5))
 	{
 		HMOTOR_voidRotation(HMOTOR_Backward,0);
-		HMOTOR_voidRotation(HMOTOR_RIGHT,HMOTOR_RIGHT_FULLSPEED);
-		HMOTOR_voidRotation(HMOTOR_Forward,7000);
-		Flag2=5;
+		HMOTOR_voidRotation(HMOTOR_RIGHT,HMOTOR_RIGHT_HALFSPEED);
+		HMOTOR_voidRotation(HMOTOR_Forward,6000);
+		Flag2++;
 
 	}
-	if((result[0]<35)&&(Flag2==5))
+	if((result[0]<60)&&(Flag2==6))
 	{
 		HMOTOR_voidRotation(HMOTOR_Forward,0);
 		HMOTOR_voidRotation(HMOTOR_LEFT,HMOTOR_LEFT_HALFSPEED);
-		Flag2=6;
+		Flag2=7;
 	}
 
+
 }
-void HULTRASONIC1_Task(void)
+
+void HULTRASONIC_Task(void)
 {
+
 	if(Flag1==0)
 	{
 		if(x1==0)
@@ -142,15 +148,12 @@ void HULTRASONIC1_Task(void)
 		}
 		if(x1==3)
 		{
+			Result = HULTRASONIC_CalculateDistance();
 			result[0]=HULTRASONIC_CalculateDistance();
 			x1=0;
 			Flag1=1;
 		}
-
 	}
-}
-void HULTRASONIC2_Task(void)
-{
 	if(Flag1==1)
 	{
 		if(x2==0)
@@ -160,15 +163,13 @@ void HULTRASONIC2_Task(void)
 		}
 		if(x2==3)
 		{
+			Result = HULTRASONIC_CalculateDistance();
 			result[1]=HULTRASONIC_CalculateDistance();
 			x2=0;
 			Flag1=2;
 		}
 
 	}
-}
-void HULTRASONIC3_Task(void)
-{
 	if(Flag1==2)
 	{
 		if(x3==0)
@@ -178,14 +179,12 @@ void HULTRASONIC3_Task(void)
 		}
 		if(x3==3)
 		{
+			Result = HULTRASONIC_CalculateDistance();
 			result[2]=HULTRASONIC_CalculateDistance();
 			x3=0;
 			Flag1=3;
 		}
 	}
-}
-void HULTRASONIC4_Task(void)
-{
 	if(Flag1==3)
 	{
 		if(x4==0)
@@ -195,15 +194,12 @@ void HULTRASONIC4_Task(void)
 		}
 		if(x4==3)
 		{
+			Result = HULTRASONIC_CalculateDistance();
 			result[3]=HULTRASONIC_CalculateDistance();
 			x4=0;
 			Flag1=4;
 		}
 	}
-}
-void HULTRASONIC5_Task(void)
-{
-
 	if(Flag1==4)
 	{
 		if(x5==0)
@@ -213,11 +209,14 @@ void HULTRASONIC5_Task(void)
 		}
 		if(x5==3)
 		{
+			Result = HULTRASONIC_CalculateDistance();
 			result[4]=HULTRASONIC_CalculateDistance();
 			x5=0;
 			Flag1=0;
 		}
 	}
+	park_Task();
+//	camera_task();
 }
 
 void Task1(void)
@@ -298,12 +297,26 @@ void Task2(void)
 			x5++;
 		}
 	}
+	if(Flag==6)
+	{
+		if(x6==1)
+		{
+			cnt1=0;
+			Counter1 = MTIM8_Read_ICU(Channel2);
+			x6++;
+		}
+		else if(x6==2)
+		{
+			Counter2 = (cnt1*65535) + MTIM8_Read_ICU(Channel2);
+			x6++;
+		}
+	}
 	MTIM8 -> SR	   &= ~(0x1E);
 }
 
 void main(void)
 {
-	/*MRCC_EnableClock(PERIPHERAL_APB1_PWR,BUS_APB1);*//* This is needed only when configuring the micro proecessor to run at 180MHZ */
+	/*MRCC_EnableClock(PERIPHERAL_APB1_PWR,BUS_APB1);*/
 	MSYSCLK_Initialize();
 	MRCC_EnableClock(PERIPHERAL_AHB1_GPIOA,BUS_AHB1);
 	MRCC_EnableClock(PERIPHERAL_AHB1_GPIOB,BUS_AHB1);
@@ -321,10 +334,6 @@ void main(void)
 	MRCC_EnableClock(PERIPHERAL_APB1_TIM2,BUS_APB1);
 	MRCC_EnableClock(PERIPHERAL_APB1_TIM7,BUS_APB1);
 	MRCC_EnableClock(PERIPHERAL_APB1_TIM3,BUS_APB1);
-	
-/****************************************************************************************************************
-*											Configuring Camera Module Pins			 							*
-****************************************************************************************************************/
 
 	MGPIO_Pin_MODE(PORTA,Pin6,AF);
 	MGPIO_Pin_OTYPE(PORTA,Pin6,PushPull);
@@ -355,6 +364,12 @@ void main(void)
 	MGPIO_Pin_OSPEED(PORTC,Pin7,HS);
 	MGPIO_Pin_PullUpOrDown(PORTC,Pin6,PullUp);
 	MGPIO_Pin_Select_AF_Channel_HIGH(PORTC,Pin8,AF13);
+
+	/*MGPIO_Pin_MODE(PORTC,Pin9,AF);
+	MGPIO_Pin_OTYPE(PORTC,Pin9,PushPull);
+	MGPIO_Pin_OSPEED(PORTC,Pin9,HS);
+	MGPIO_Pin_PullUpOrDown(PORTC,Pin9,PullUp);
+	MGPIO_Pin_Select_AF_Channel_HIGH(PORTC,Pin9,AF13);*/
 
 	MGPIO_Pin_MODE(PORTE,Pin1,AF);
 	MGPIO_Pin_OTYPE(PORTE,Pin1,PushPull);
@@ -409,10 +424,11 @@ void main(void)
 	MGPIO_Pin_Select_AF_Channel_HIGH(PORTB,Pin9,AF4);
 	MGPIO_Pin_PullUpOrDown(PORTB,Pin9,PullUp);
 
+
 	MSTK_Initialize();
 
-	MNVK_EnableInt(57);
-	MNVK_SetPriority(57,0);
+	//MNVK_EnableInt(57);
+	//MNVK_SetPriority(57,0);
 	MNVK_EnableInt(TIM7_IRQ_ID);
 
 	HOV7670_Initialize();
@@ -437,11 +453,8 @@ void main(void)
 	HILI9341_Fill(ILI9341_COLOR_BLACK);
 	HILI9341_Puts(60, 110, "MTE project", &LCD_Font_16x26, ILI9341_COLOR_WHITE, ILI9341_COLOR_BLUE);
 	MSTK_Delay_us(1000000);
+	
 	HILI9341_SPI_BaudRateUp();
-
-
-
-
 
 	MTIM1_ICU_SetCallBack(Task1);
 	MTIM1_UP_SetCallBack(TIM1_OV);
@@ -449,19 +462,9 @@ void main(void)
 	MTIM8_ICU_SetCallBack(Task2);
 
 	RTOS_Initialize();
-	RTOS_CreateTask(0,250,camera_task);
-	RTOS_CreateTask(1,500,HULTRASONIC1_Task);
-	RTOS_CreateTask(2,500,HULTRASONIC2_Task);
-	RTOS_CreateTask(3,500,HULTRASONIC3_Task);
-	RTOS_CreateTask(4,500,HULTRASONIC4_Task);
-	RTOS_CreateTask(5,500,HULTRASONIC5_Task);
-	RTOS_CreateTask(6,250,park2_Task);
-	RTOS_CreateTask(7,250,park3_Task);
-	RTOS_CreateTask(8,250,park4_Task);
-	RTOS_CreateTask(9,250,park5_Task);
-	RTOS_CreateTask(10,250,park6_Task);
 
-
+	RTOS_CreateTask(0,500,HULTRASONIC_Task);
+	RTOS_CreateTask(1,11,camera_task);
 
 	MNVK_EnableInt(TIM1_CC_ID);
 	MNVK_EnableInt(TIM1_UP_TIM10_ID);
@@ -471,25 +474,16 @@ void main(void)
 	MNVK_EnableInt(TIM7_IRQ_ID);
 	MNVK_SetPriority(TIM7_IRQ_ID,0x20);
 
+
 	HMOTOR_voidInitialize();
 	HULTRASONIC1_voidInitialize();
 
 	MTIM2_PWM_Initialize();
 
-
 	MTIM7_Initialize();
 	while(1)
 	{
 
-	}
-}
-void DMA2_Stream1_IRQHandler(void)
-{
-	if(((MDMA2 -> LISR) & 0x800)!= 0)
-	{
-		MDMA2 ->LIFCR|= 0x800;
-		MDMA2 ->S1CR |=0x01;
-		frame_flag = 1;
 	}
 }
 
