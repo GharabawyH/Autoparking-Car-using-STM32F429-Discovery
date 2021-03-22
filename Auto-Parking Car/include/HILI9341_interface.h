@@ -1,12 +1,6 @@
 #ifndef _HILI9341_INTERFACE_H
 #define _HILI9341_INTERFACE_H
 
-typedef struct
-{
-	u8 FontWidth;
-	u8 FontHeight;
-	const u16 *data;
-} LCD_FontDef_t;
 
 
 
@@ -78,8 +72,7 @@ typedef enum {
 
 // LCD options, Used private
 typedef struct {
-	//u16 width;
-	//u16 height;
+	
 	u16 width;
 	u16 height;
 
@@ -87,28 +80,16 @@ typedef struct {
 } LCD_ILI931_Options_t;
 
 
-// Select font
-extern LCD_FontDef_t LCD_Font_7x10;
-extern LCD_FontDef_t LCD_Font_11x18;
-extern LCD_FontDef_t LCD_Font_16x26;
 
 extern void HILI9341_Init(void);
 extern void HILI9341_InitLCD(void);
 extern void HILI9341_SendData(u8 data);
 extern void HILI9341_SendCommand(u8 data);
-extern void HILI9341_SetCursorPosition(u16 x1, u16 y1, u16 x2, u16 y2);
-extern void HILI9341_DrawPixel(u16 x, u16 y, u16 color);
+
 extern void HILI9341_Fill(u16 color);
 extern void HILI9341_DisplayImage(u16 image[ILI9341_PIXEL]);
 extern void HILI9341_Rotate(LCD_ILI9341_Orientation_t orientation);
-extern void HILI9341_Putc(u16 x, u16 y, char c, LCD_FontDef_t *font, u16 foreground, u16 background);
-extern void HILI9341_Puts(u16 x, u16 y, char *str, LCD_FontDef_t *font, u16 foreground, u16 background);
-extern void HILI9341_GetStringSize(char *str, LCD_FontDef_t *font, u16 *width, u16 *height);
-extern void HILI9341_DrawLine(u16 x0, u16 y0, u16 x1, u16 y1, u16 color);
-extern void HILI9341_DrawRectangle(u16 x0, u16 y0, u16 x1, u16 y1, u16 color);
-extern void HILI9341_DrawFilledRectangle(u16 x0, u16 y0, u16 x1, u16 y1, u16 color);
-extern void HILI9341_DrawCircle(s16 x0, s16 y0, s16 r, u16 color);
-extern void HILI9341_DrawFilledCircle(s16 x0, s16 y0, s16 r, u16 color);
+
 
 extern void HILI9341_SPI_Init(void);
 extern void HILI9341_SPI_SendMulti(u8 *dataOut, u8 *dataIn, u16 count);
